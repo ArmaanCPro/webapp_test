@@ -1,6 +1,7 @@
 ﻿build/
 .cache/
 CMakeFiles/
+*.cmake
 
 
 ### VisualStudioCode template
