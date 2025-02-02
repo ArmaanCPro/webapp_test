@@ -7,9 +7,11 @@ import (
 	"os"
 )
 
+// to run from local host 8080: go run go_client\client.go localhost 8080
+
 func main() {
 	if len(os.Args) != 3 {
-		fmt.Println("Usage: go_client <host> <port>")
+		fmt.Println("Usage: client.go <host> <port>")
 		return
 	}
 
@@ -25,8 +27,8 @@ func main() {
 		fmt.Print("Enter message: ")
 		message, _ := reader.ReadString('\n')
 
-		if message == "exit\n" {
-			break
+		if message == "exit\r\n" || message == "exit\n" {
+			return
 		}
 
 		fmt.Fprintf(conn, message)

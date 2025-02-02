@@ -25,6 +25,11 @@ private:
     {
         if (!error)
         {
+            // for debug, write the data to stdout
+            std::cout.write(data_, bytes_transferred);
+            std::cout.flush();
+
+            // echo back
             boost::asio::async_write(socket_, boost::asio::buffer(data_, bytes_transferred),
                 boost::bind(&Session::handle_write, this, boost::asio::placeholders::error));
         }
