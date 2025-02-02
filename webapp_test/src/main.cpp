@@ -8,6 +8,7 @@ std::string make_http_response(const std::string& content)
     return "HTTP/1.1 200 OK\r\n"
            "Content-Length: " + std::to_string(content.length()) + "\r\n"
            "Content-Type: text/html\r\n"
+           "Access-Control-Allow-Origin: *\r\n"
            "\r\n" +
            content;
 }
@@ -23,7 +24,7 @@ void handle_request(tcp::socket& socket)
         std::string request_line;
         std::getline(request_stream, request_line);
 
-        std::string response_content = "<html><body><h1>Hello, World!</h1></body></html>";
+        std::string response_content = "<html><body><p>Hello, mom!</p></body></html>";
         std::string response = make_http_response(response_content);
 
         boost::asio::write(socket, boost::asio::buffer(response), ec);
@@ -41,7 +42,8 @@ int main()
 
         const std::string address = "http://localhost:8080/";
         std::cout << "Server is running on " << address << std::endl;
-        std::cout << "Note, going to the web address (" << address << ") via your web browser is necessary. opening the html file won't show any changes";
+        std::cout << "Note, going to the web address (" << address << ") will only display the web server's output" << std::endl;
+        std::cout << "Try opening the html file in your browser while the c++ app is running!";
 
         while (true) {
             tcp::socket socket(io_context);
