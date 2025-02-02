@@ -27,7 +27,7 @@ func main() {
 		fmt.Print("Enter message: ")
 		message, _ := reader.ReadString('\n')
 
-		if message == "exit\r\n" || message == "exit\n" {
+		if message == "exit\r\n" || message == "exit\n" || conn. {
 			return
 		}
 

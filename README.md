@@ -13,3 +13,7 @@ It's just an echo server using boost asio for the server and Go for the client. 
 
 - Note: if you don't have VCPKG_ROOT set in your environment variables, you can use absolute paths, just replace it wherever you see ${VCPKG_ROOT} with the path to your vcpkg directory.
 - Note 2: vcpkg toolchain is being set now when I use vs code. it may be because I set the cmake version to 3.30.0 in the CMakeLists.txt file. I'm not sure, but it's working now
+
+# Dependencies
+- vcpkg
+- Boost (asio)

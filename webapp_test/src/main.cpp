@@ -50,7 +50,7 @@ private:
 
 
     tcp::socket socket_;
-    enum { max_length = 1024 };
+    static constexpr size_t max_length = 1024;
     char data_[1024];
 };
 
