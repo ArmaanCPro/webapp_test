@@ -1,59 +1,107 @@
 #include <boost/asio.hpp>
+#include <boost/bind.hpp>
 #include <iostream>
 
 using boost::asio::ip::tcp;
 
-std::string make_http_response(const std::string& content)
+class Session
 {
-    return "HTTP/1.1 200 OK\r\n"
-           "Content-Length: " + std::to_string(content.length()) + "\r\n"
-           "Content-Type: text/html\r\n"
-           "Access-Control-Allow-Origin: *\r\n"
-           "\r\n" +
-           content;
-}
+public:
+    Session(boost::asio::io_service& io_service)
+        :
+        socket_(io_service)
+    {}
 
-void handle_request(tcp::socket& socket)
-{
-    boost::system::error_code ec;
-    boost::asio::streambuf buffer;
+    tcp::socket& socket() { return socket_; }
 
-    boost::asio::read_until(socket, buffer, "\r\n\r\n", ec);
-    if (!ec) {
-        std::istream request_stream(&buffer);
-        std::string request_line;
-        std::getline(request_stream, request_line);
-
-        std::string response_content = "<html><body><p>Hello, mom!</p></body></html>";
-        std::string response = make_http_response(response_content);
-
-        boost::asio::write(socket, boost::asio::buffer(response), ec);
-        socket.shutdown(tcp::socket::shutdown_both, ec);
-        socket.close(ec);
+    void start()
+    {
+        socket_.async_read_some(boost::asio::buffer(data_, max_length),
+            boost::bind(&Session::handle_read, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
+        );
     }
-}
+private:
+    void handle_read(const boost::system::error_code& error, size_t bytes_transferred)
+    {
+        if (!error)
+        {
+            boost::asio::async_write(socket_, boost::asio::buffer(data_, bytes_transferred),
+                boost::bind(&Session::handle_write, this, boost::asio::placeholders::error));
+        }
+        else
+            delete this;
+    }
 
-int main()
+    void handle_write(const boost::system::error_code& error)
+    {
+        if (!error)
+        {
+            socket_.async_read_some(boost::asio::buffer(data_, max_length),
+                boost::bind(&Session::handle_read, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+        }
+        else
+            delete this;
+    }
+
+
+    tcp::socket socket_;
+    enum { max_length = 1024 };
+    char data_[1024];
+};
+
+class Server
+{
+public:
+    Server(boost::asio::io_service& io_service, short port)
+        :
+        io_service_(io_service),
+        acceptor_(io_service, tcp::endpoint(tcp::v4(), port))
+    {
+        start_accept();
+    }
+
+private:
+    void start_accept()
+    {
+        Session* new_session = new Session(io_service_);
+        acceptor_.async_accept(new_session->socket(),
+            boost::bind(&Server::handle_accept, this, new_session, boost::asio::placeholders::error));
+    }
+
+    void handle_accept(Session* new_session, const boost::system::error_code& error)
+    {
+        if (!error)
+            new_session->start();
+        else
+            delete new_session;
+
+        start_accept();
+    }
+
+    boost::asio::io_service& io_service_;
+    tcp::acceptor acceptor_;
+};
+
+int main(int argc, char* argv[])
 {
     try
     {
-        boost::asio::io_context io_context;
-        tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), 8080));
-
-        const std::string address = "http://localhost:8080/";
-        std::cout << "Server is running on " << address << std::endl;
-        std::cout << "Note, going to the web address (" << address << ") will only display the web server's output" << std::endl;
-        std::cout << "Try opening the html file in your browser while the c++ app is running!";
-
-        while (true) {
-            tcp::socket socket(io_context);
-            acceptor.accept(socket);
-            handle_request(socket);
+        if (argc != 2)
+        {
+            std::cerr << "Usage: async_tcp_echo_server <port>\n";
+            return 1;
         }
+
+        boost::asio::io_service io_service;
+
+        using namespace std;
+        Server s(io_service, atoi(argv[1]));
+
+        io_service.run();
     }
     catch (std::exception& e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Exception: " << e.what() << std::endl;
     }
 
     return 0;

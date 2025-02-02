@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.20)
+﻿cmake_minimum_required(VERSION 3.30)
 
 project (webapp_test)
 
@@ -25,5 +25,5 @@ add_executable( webapp_test ${SOURCES} 	)
 find_package(boost_system REQUIRED)
 find_package(boost_asio REQUIRED)
 
-# Link the Boost libraries and Winsock (ws2_32). winsock is necessary for asio
-target_link_libraries(webapp_test PRIVATE Boost::system Boost::asio ws2_32)
+# Link the Boost libraries and Winsock (ws2_32). winsock and mswsock is necessary for asio
+target_link_libraries(webapp_test PRIVATE Boost::system Boost::asio ws2_32 mswsock)
